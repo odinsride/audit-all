@@ -1,0 +1,9 @@
+For each repo in a directory listing of local Git repostiores:
+
+	Print the repository name
+	Perform git pull
+	Print the commits for the past N days/weeks etc in Master
+	For each remote branch in the repo
+		Checkout the remote branch
+		Print the commits that have been made in the remote branch
+	Go back to master branch

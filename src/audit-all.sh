@@ -11,11 +11,11 @@
 ######################################################################################
 
 START_HERE="/c/gitp/";
-OUTPUT="./report.html"
+OUTPUT="$START_HERE/report.html"
 
 cd $START_HERE;
 
-echo "<html>" >> $OUTPUT
+echo "<html>" > $OUTPUT
 
 echo -e "\nGenerating an audit report for $START_HERE\n";
 
@@ -31,7 +31,15 @@ for d in $(find . -maxdepth 1 -mindepth 1 -type d); do
             git checkout master;
       fi
 
-      echo "<h1>$d</h1>" > $OUTPUT
+      # Get the latest changes for the master branch
+      git pull
+
+      echo "<h1>$(echo ${d} | tr -d './')</h1>" >> $OUTPUT
+      echo
+      for x in "$(git log --date=short --pretty=format:'%h|%s|%cd|%an' --since=4.weeks)"; do
+            echo $x'</br>' >> $OUTPUT
+      done
+      echo
 
       # Return to the previously checked out branch
       if [ "$CURRENT_BRANCH" != "master" ]; then
@@ -41,5 +49,4 @@ for d in $(find . -maxdepth 1 -mindepth 1 -type d); do
 	cd $START_HERE;
 done
 
-echo -e "\nAll local repositories have been updated.\n";
-echo "</html>" > $OUTPUT
+echo "</html>" >> $OUTPUT

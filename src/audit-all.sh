@@ -12,7 +12,7 @@
 
 START_HERE="/c/gitp/";
 OUTPUT="$START_HERE/report.html"
-
+LOG_CMD="git log --date=short --pretty=tformat:<tr><td>%h</td><td>%s</td><td>%cd</td><td>%an</td></tr>@@ --since=4.weeks"
 cd $START_HERE;
 
 echo "<html>" > $OUTPUT
@@ -32,14 +32,14 @@ for d in $(find . -maxdepth 1 -mindepth 1 -type d); do
       fi
 
       # Get the latest changes for the master branch
-      git pull
+      #git pull
 
       echo "<h1>$(echo ${d} | tr -d './')</h1>" >> $OUTPUT
-      echo
-      for x in "$(git log --date=short --pretty=format:'%h|%s|%cd|%an' --since=4.weeks)"; do
-            echo $x'</br>' >> $OUTPUT
-      done
-      echo
+      echo "<table>" >> $OUTPUT
+      log=`$LOG_CMD`
+      #echo $log | sed 's/@@/'\\\n'/g' >> $OUTPUT
+      echo $log | sed 's/@@ /'\\\n'/g' | tr -d '@@' >> $OUTPUT
+      echo "</table>" >> $OUTPUT
 
       # Return to the previously checked out branch
       if [ "$CURRENT_BRANCH" != "master" ]; then

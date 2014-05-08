@@ -22,7 +22,7 @@ START_HERE="/c/gitaudit"
 OUTPUT="$START_HERE/report.html"
 SINCE="3.weeks"
 RIGHT_NOW=$(date +"%x %r %Z")
-LOG_CMD="git log --date=short --pretty=tformat:<tr><td>%h</td><td>%s</td><td>%cd</td><td>%an</td></tr>@@ --since=$SINCE"
+LOG_CMD="git log --date=short --pretty=tformat:<tr><td>%h</td><td>%cd</td><td>%an</td><td>%s</td></tr>@@ --since=$SINCE"
 
 
 ######################################################################################

@@ -111,6 +111,12 @@ cat << EOF
 <html>
       <head>
             <title>Git Audit Report for $RIGHT_NOW</title>
+      <style media="screen" type="text/css">
+            body {
+                  font-family:      sans-serif;
+                  font-size:        10pt;
+            }
+      </style>
       </head>
 <body>
 $(processRepos)

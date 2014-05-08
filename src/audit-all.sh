@@ -22,7 +22,8 @@ START_HERE="/c/gitaudit"
 OUTPUT="$START_HERE/report.html"
 SINCE="3.weeks"
 RIGHT_NOW=$(date +"%x %r %Z")
-LOG_CMD="git log --date=short --pretty=tformat:<tr><td>%h</td><td>%cd</td><td>%an</td><td>%s</td></tr>@@ --since=$SINCE"
+#LOG_CMD="git log --date=short --pretty=tformat:<tr><td>%h</td><td>%cd</td><td>%an</td><td>%s</td></tr>@@ --since=$SINCE"
+LOG_CMD="git log --date=short --oneline --pretty=tformat:%h|%cd|%an|%s@@ --since=$SINCE"
 
 
 ######################################################################################
@@ -43,13 +44,20 @@ function generateLogTable ()
 
       echo "${TTITLE}"
 
-      if [ -z "${LOG}" ]; then
-            echo "No recent activity"
-      else
-            echo "<table>"
-            echo "${LOG}" | sed 's/@@ /'\\\n'/g' | tr -d '@@'
-            echo "</table>"
-      fi
+      count=1
+      LOG="${LOG}" | sed 's/@@ /'\\n'/g' | tr -d '@@'
+      echo "${LOG}" | while read line
+      do
+            echo "line ${count}: " "${line}"
+            count=$((count+1))
+      done
+      # if [ -z "${LOG}" ]; then
+      #       echo "No recent activity"
+      # else
+      #       echo "<table>"
+      #       echo "${LOG}" | sed 's/@@ /'\\\n'/g' | tr -d '@@'
+      #       echo "</table>"
+      # fi
 }
 
 function processBranches
@@ -59,7 +67,7 @@ function processBranches
             # If the remote branch already exists locally, check out the local branch
             if [ "${b}" = "$(git branch -l | grep "${b}" | tr -d ' ')" ]; then
                   git checkout -q ${b}
-                  git pull -q
+                  #git pull -q
             else
                   git checkout -q -t origin/${b}
             fi

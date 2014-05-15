@@ -18,12 +18,12 @@
 ######################################################################################
 # Constants
 ######################################################################################
-START_HERE="/c/gitaudit"
+START_HERE="/c/git/UVA-Audit"
 OUTPUT="$START_HERE/report.html"
-SINCE="3.weeks"
+SINCE="5.weeks"
 RIGHT_NOW=$(date +"%x %r %Z")
 #LOG_CMD="git log --date=short --pretty=tformat:<tr><td>%h</td><td>%cd</td><td>%an</td><td>%s</td></tr>@@ --since=$SINCE"
-LOG_CMD="git log --date=short --oneline --pretty=tformat:%h|%cd|%an|%s@@ --since=$SINCE"
+LOG_CMD="git log --date=short --oneline --pretty=tformat:%h|%cd|%an|%s --since=$SINCE"
 
 
 ######################################################################################
@@ -34,7 +34,7 @@ function generateLogTable ()
 {
       BRANCH=$(echo ${1} | tr -d './')
       BRANCH_AUTHOR=`git for-each-ref --format='%(authorname)%09%(refname)' | grep origin/${1} | cut -f1`
-      LOG=`$LOG_CMD ${2}`    
+      LOG=`$LOG_CMD ${2}`
       
       if [ "${BRANCH}" = "master" ]; then
             TTITLE="<h3>${BRANCH}</h3>"
@@ -44,20 +44,31 @@ function generateLogTable ()
 
       echo "${TTITLE}"
 
-      count=1
-      LOG="${LOG}" | sed 's/@@ /'\\n'/g' | tr -d '@@'
-      echo "${LOG}" | while read line
-      do
-            echo "line ${count}: " "${line}"
-            count=$((count+1))
-      done
-      # if [ -z "${LOG}" ]; then
-      #       echo "No recent activity"
-      # else
-      #       echo "<table>"
-      #       echo "${LOG}" | sed 's/@@ /'\\\n'/g' | tr -d '@@'
-      #       echo "</table>"
-      # fi
+      if [ -z "${LOG}" ]; then
+            echo "No recent activity"
+      else
+            echo "<table>"
+
+            count=1
+            echo "${LOG}" | while read line
+            do
+                  OIFS=$IFS
+                  IFS='|' read hsh date author msg <<< "${line}"
+                  
+                  echo "<tr>"
+                  echo "      <td>${count}</td>"
+                  echo "      <td>${hsh}</td>"
+                  echo "      <td>${date}</td>"
+                  echo "      <td>${author}</td>"
+                  echo "      <td>${msg}</td>"
+                  echo "</tr>"
+                  
+                  IFS=$OIFS
+                  count=$((count+1))
+            done
+
+            echo "</table>"
+      fi
 }
 
 function processBranches

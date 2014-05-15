@@ -47,8 +47,18 @@ function generateLogTable ()
       if [ -z "${LOG}" ]; then
             echo "No recent activity"
       else
-            echo "<table>"
+            echo "<table id=\"logTable\">"
+            echo "      <thead>"
+            echo "            <tr>"
+            echo "                  <th scope=\"col\">&nbsp;</th>"
+            echo "                  <th scope=\"col\">Hash</th>"
+            echo "                  <th scope=\"col\">Date</th>"
+            echo "                  <th scope=\"col\">Committer</th>"
+            echo "                  <th scope=\"col\">Message</th>"
+            echo "            </tr>"
+            echo "      </thead>"
 
+            echo "      <tbody>"
             count=1
             echo "${LOG}" | while read line
             do
@@ -66,7 +76,7 @@ function generateLogTable ()
                   IFS=$OIFS
                   count=$((count+1))
             done
-
+            echo "      </tbody>"
             echo "</table>"
       fi
 }
@@ -132,9 +142,37 @@ cat << EOF
             <title>Git Audit Report for $RIGHT_NOW</title>
       <style media="screen" type="text/css">
             body {
-                  font-family:      sans-serif;
-                  font-size:        10pt;
+                  font-family:      "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+                  font-size:        13px;
             }
+            #logTable
+            {
+                  font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+                  font-size: 13px;
+                  background: #fff;
+                  margin: 30px;
+                  width: 80%;
+                  border-collapse: collapse;
+                  text-align: left;
+            }
+            #logTable th
+            {
+                  font-size: 14px;
+                  font-weight: bold;
+                  color: #039;
+                  padding: 10px 8px;
+                  border-bottom: 2px solid #6678b1;
+            }
+            #logTable td
+            {
+                  border-bottom: 1px solid #ccc;
+                  color: #669;
+                  padding: 6px 8px;
+            }
+            #logTable tbody tr:hover td
+            {
+                  color: #009;
+            }            
       </style>
       </head>
 <body>

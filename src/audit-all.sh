@@ -54,7 +54,7 @@ function generateLogTable ()
             echo "                  <th scope=\"col\">&nbsp;</th>"
             echo "                  <th scope=\"col\">Hash</th>"
             echo "                  <th scope=\"col\">Date</th>"
-            echo "                  <th scope=\"col\">Committer</th>"
+            echo "                  <th scope=\"col\">Author</th>"
             echo "                  <th scope=\"col\">Message</th>"
             echo "            </tr>"
             echo "      </thead>"
@@ -65,13 +65,14 @@ function generateLogTable ()
             do
                   OIFS=$IFS
                   IFS='|' read hsh date author msg <<< "${line}"
-                  
+                  IFS='-' read year month day <<< "${date}"
+
                   echo "<tr>"
-                  echo "      <td>${count}</td>"
-                  echo "      <td>${hsh}</td>"
-                  echo "      <td>${date}</td>"
-                  echo "      <td>${author}</td>"
-                  echo "      <td>${msg}</td>"
+                  echo "      <td id=\"logrow\">${count}</td>"
+                  echo "      <td id=\"hash\">${hsh}</td>"
+                  echo "      <td id=\"date\">${month}/${day}/${year}</td>"
+                  echo "      <td id=\"author\">${author}</td>"
+                  echo "      <td id=\"msg\">${msg}</td>"
                   echo "</tr>"
                   
                   IFS=$OIFS
@@ -143,37 +144,73 @@ cat << EOF
             <title>Git Audit Report for $RIGHT_NOW</title>
       <style media="screen" type="text/css">
             body {
-                  font-family:      "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-                  font-size:        13px;
+                font-family:      "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+                font-size:        13px;
+            }
+            h1
+            {
+            	font-size: 24px;
+            	letter-spacing: 2px;
+            	color: #039;
+            }
+            h3
+            {
+            	font-size: 20px;
+            	letter-spacing: 2px;
+            	margin-left: 30px;
+            	color: #039;
             }
             #logTable
             {
-                  font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
-                  font-size: 13px;
-                  background: #fff;
-                  margin: 30px;
-                  width: 80%;
-                  border-collapse: collapse;
-                  text-align: left;
+                font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+                font-size: 13px;
+                background: #fff;
+                margin-left: 30px;
+                margin-bottom: 60px;
+                width: 80%;
+                border-collapse: collapse;
+                text-align: left;
             }
             #logTable th
             {
-                  font-size: 14px;
-                  font-weight: bold;
-                  color: #039;
-                  padding: 10px 8px;
-                  border-bottom: 2px solid #6678b1;
+                font-size: 14px;
+                font-weight: bold;
+                color: #039;
+                padding: 10px 8px;
+                border-bottom: 2px solid #6678b1;
             }
             #logTable td
             {
-                  border-bottom: 1px solid #ccc;
-                  color: #669;
-                  padding: 6px 8px;
+                border-bottom: 1px solid #ccc;
+                color: #669;
+                padding: 6px 8px;
             }
             #logTable tbody tr:hover td
             {
-                  color: #009;
-            }            
+                color: #009;
+            }
+            #logrow
+            {
+            	width: 3%;
+            	text-align: right;
+            	border-right: 1px dotted #ccc;
+            }
+            #hash
+            {
+            	width: 10%;
+            }
+            #date
+            {
+            	width: 10%;
+            }
+            #author
+            {
+            	width: 15%;
+            } 
+            #msg
+            {
+            	width: 62%;
+            }           
       </style>
       </head>
 <body>

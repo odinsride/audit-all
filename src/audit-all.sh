@@ -18,7 +18,8 @@
 ######################################################################################
 # Constants
 ######################################################################################
-START_HERE="/c/git/UVA-Audit"
+#START_HERE="/c/git/UVA-Audit"
+START_HERE="/f/Documents/GitHubAudit"
 OUTPUT="$START_HERE/report.html"
 SINCE="5.weeks"
 RIGHT_NOW=$(date +"%x %r %Z")
@@ -99,7 +100,7 @@ function processBranches
 
 function processRepos
 {
-      for d in $(find . -maxdepth 1 -mindepth 1 -type d); do
+      for d in $(find . -name '.git' -maxdepth 2 | sed 's#\(.*\)/.*#\1#' | sed 's/.\///g'); do
             cd $d
 
             # Print current repository name

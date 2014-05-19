@@ -18,8 +18,8 @@
 ######################################################################################
 # Constants
 ######################################################################################
-#START_HERE="/c/git/UVA-Audit"
-START_HERE="/f/Documents/GitHubAudit"
+START_HERE="/c/git/UVA-Audit"
+#START_HERE="/f/Documents/GitHubAudit"
 OUTPUT="$START_HERE/report.html"
 SINCE="5.weeks"
 RIGHT_NOW=$(date +"%x %r %Z")
@@ -46,7 +46,7 @@ function generateLogTable ()
       echo "${TTITLE}"
 
       if [ -z "${LOG}" ]; then
-            echo "No recent activity"
+            echo "<div id=\"norecent\">- No recent activity -</div>"
       else
             echo "<table id=\"logTable\">"
             echo "      <thead>"
@@ -96,7 +96,14 @@ function processBranches
             fi
             
             echo "$(generateLogTable ${b} master..)"
+
       done
+}
+
+function updateRepo
+{
+  git pull -q
+  git remote prune origin > /dev/null
 }
 
 function processRepos
@@ -115,8 +122,7 @@ function processRepos
                   git checkout -q master
             fi
 
-            #git pull -q
-            #git remote prune origin
+            #updateRepo
 
             # Print Log for Master Branch
             echo "$(generateLogTable master)"
@@ -149,14 +155,12 @@ cat << EOF
             }
             h1
             {
-            	font-size: 24px;
-            	letter-spacing: 2px;
+            	font-size: 36px;
             	color: #039;
             }
             h3
             {
             	font-size: 20px;
-            	letter-spacing: 2px;
             	margin-left: 30px;
             	color: #039;
             }
@@ -178,6 +182,12 @@ cat << EOF
                 color: #039;
                 padding: 10px 8px;
                 border-bottom: 2px solid #6678b1;
+            }
+            #norecent
+            {
+              color: #039;
+              margin-left: 100px;
+              margin-bottom: 60px;
             }
             #logTable td
             {

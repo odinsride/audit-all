@@ -4,7 +4,7 @@
 #     PROGRAM       : audit-all.sh
 #     DESCRIPTION   : This script will generate an audit report for all Git repos in 
 #                     a specified directory
-#     USAGE         : Set the START_HERE variable to the directory containing your
+#     USAGE         : Set the GIT_REPOS variable to the directory containing your
 #                     repositories.
 #     NOTE          : *** It's strongly recommended to maintain a separate
 #                         working directory with fresh clones of all of your Git
@@ -18,23 +18,43 @@
 ######################################################################################
 # Constants
 ######################################################################################
-START_HERE="/c/git/UVA-Audit"
-#START_HERE="/f/Documents/GitHubAudit"
-OUTPUT="$START_HERE/report.html"
+GIT_REPOS="/c/git/UVA-Audit"
+OUTPUT="${GIT_REPOS}/report.html"
 SINCE="5.weeks"
 RIGHT_NOW=$(date +"%x %r %Z")
-LOG_CMD="git log --date=short --oneline --pretty=tformat:%h|%cd|%an|%s --since=$SINCE"
 
 
 ######################################################################################
-# Functions
+# System Commands
 ######################################################################################
+getRepoList () {
+  find . -name '.git' -maxdepth 2 | sed 's#\(.*\)/.*#\1#' | sed 's/.\///g'
+}
 
-function generateLogTable ()
-{
+getLog () {
+  git log --date=short --oneline --pretty=tformat:"%h|%cd|%an|%s" --since=$SINCE ${1} ${2}
+}
+
+getRemoteBranches () {
+  git branch -r | sed '/HEAD/d' | awk -F'origin/' '{print $2}'
+}
+
+getCurrentBranch () {
+  git branch --no-color | grep '^\* ' | grep -v 'no branch' | sed 's/^* //g'
+}
+
+checkLocalBranch () {
+  git branch -l | grep ${1} | tr -d '* '
+}
+
+######################################################################################
+# Program Functions
+######################################################################################
+generateLogTable () {
+
   BRANCH=$(echo ${1} | tr -d './')
   BRANCH_AUTHOR=`git for-each-ref --format='%(authorname)%09%(refname)' | grep origin/${1} | cut -f1`
-  LOG=`$LOG_CMD ${2}`
+  LOG=$(getLog ${1} ${2}) 
       
   if [ "${BRANCH}" = "master" ]; then
     TTITLE="<h3>${BRANCH}</h3>"
@@ -82,58 +102,104 @@ function generateLogTable ()
   fi
 }
 
-function processBranches
-{
-  for b in $(git branch -r | sed '/HEAD/d' | sed '/master/d' | awk -F'origin/' '{print $2}'); do
-        
+printBranches () {
+
+  echo "    <div id=\"repoBranches\">"
+  echo "      Branches:<br />"
+  echo "      <ul>"
+  
+  for b in $(getRemoteBranches); do
+    echo "      <li><a href=\"#${1}.${b}\">${b}</a></li>"
+  done
+
+  echo "      </ul>"
+  echo "    </div>"
+
+}
+
+processBranches () {
+
+  for b in $(getRemoteBranches); do
+    
+    is_local_branch=false
+
     # If the remote branch already exists locally, check out the local branch
-    if [ "${b}" = "$(git branch -l | grep "${b}" | tr -d ' ')" ]; then
-      git checkout -q ${b}
+    if [ ${b} = "$(checkLocalBranch ${b})" ]; then
+      
+      is_local_branch=true
+
+      # If already on the branch, don't try to check it out again
+      if [ ${b} != "$(getCurrentBranch)" ]; then
+        git checkout -q ${b}
+      fi
+
       #git pull -q
+
     else
       git checkout -q -t origin/${b}
     fi
     
-    echo "$(generateLogTable ${b} master..)"
+    # Print the log table for the branch
+    if [ ${b} = "master" ]; then
+      echo "$(generateLogTable ${b})"
+    else
+      echo "$(generateLogTable ${b} master..)"
+    fi
+
+    # Delete the local branch if it did not already exist
+    if ! $is_local_branch ; then
+      git checkout -q master
+
+      # don't try to delete master
+      if [ ${b} != "master" ]; then
+        git branch -D ${b} > /dev/null
+      fi
+    fi
 
   done
+
 }
 
-function updateRepo
-{
+updateRepo () {
   git pull -q
   git remote prune origin > /dev/null
 }
 
-function handleRepo
-{
-  # Preserve the current working branch
-  CURRENT_BRANCH=$(git symbolic-ref HEAD | awk -F'/' '{print $3}')
+# Process the current repository
+processRepo () {
+
+  original_branch=$(getCurrentBranch)
 
   # Start with master
-  if [ "$CURRENT_BRANCH" != "master" ]; then
+  if [ ${original_branch} != "master" ]; then
     git checkout -q master
   fi
 
+  # Pull and prune the repository
   #updateRepo
 
-  # Print Log for Master Branch
-  echo "$(generateLogTable master)"
+  # Print a list of all the branches
+  echo "$(printBranches ${1})"
 
-  # Process the remote branches
+  # Process the branches
   echo "$(processBranches)"
 
   # Return to the previously checked out branch
-  if [ "$CURRENT_BRANCH" != "master" ]; then
-    git checkout -q "$CURRENT_BRANCH"
+  if [ ${original_branch} != "master" ]; then
+    git checkout -q ${original_branch}
   else
     git checkout -q master
   fi
+
 }
 
-function processRepos
-{
-  for d in $(find . -name '.git' -maxdepth 2 | sed 's#\(.*\)/.*#\1#' | sed 's/.\///g'); do
+# Process the repository directories
+processRepoDirs () {
+
+  cd ${GIT_REPOS}
+
+  # loop through directories
+  for d in $(getRepoList); do
   
     # Change to the current repository directory
     cd ${d}
@@ -141,40 +207,66 @@ function processRepos
     # Print current directory/repository name
     echo "<h1>$(echo ${d} | tr -d './')</h1>"
 
-    # Handle the current repository
-    handleRepo
+    # Process the current repository
+    processRepo ${d}
 
     # Go back to root directory
-    cd $START_HERE
+    cd ${GIT_REPOS}
 
   done
 }
 
-function generatePage
-{
-cat << EOF
+# Create the HTML/CSS report skeleton
+createReport () {
+cat > ${OUTPUT} << EOF
 <html>
   <head>
-    <title>Git Audit Report for $RIGHT_NOW</title>
+    <title>Git Audit Report for ${RIGHT_NOW}</title>
     <style media="screen" type="text/css">
       body {
         font-family:      "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
         font-size:        13px;
+        color: #039;
+      }
+      a { color: inherit; }
+      a:link
+      {
+        text-decoration: none;
+      }
+      a:visited
+      {
+        text-decoration: none;
+      }
+      a:hover
+      {
+        text-decoration: underline;
+      }
+      a:active
+      {
+        text-decoration: underline;
       }
       h1
       {
-      	font-size: 36px;
-      	color: #039;
+        font-size: 36px;
+        border-top: 10px solid #6678b1;
+        padding-top: 10px;
       }
       h3
       {
-      	font-size: 20px;
-      	margin-left: 30px;
-      	color: #039;
+        font-size: 20px;
+        margin-left: 30px;
+      }
+      #repoBranches
+      {
+        margin-left: 30px;
+        font-weight: bold;
+        width: 250px;
+        border: 1px dotted #6678b1;
+        background-color: #FBFDFF;
+        padding: 10px;
       }
       #logTable
       {
-        font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
         font-size: 13px;
         background: #fff;
         margin-left: 30px;
@@ -187,13 +279,11 @@ cat << EOF
       {
         font-size: 14px;
         font-weight: bold;
-        color: #039;
         padding: 10px 8px;
         border-bottom: 2px solid #6678b1;
       }
       #norecent
       {
-        color: #039;
         margin-left: 100px;
         margin-bottom: 60px;
       }
@@ -209,41 +299,43 @@ cat << EOF
       }
       #logrow
       {
-      	width: 3%;
-      	text-align: right;
-      	border-right: 1px dotted #ccc;
+        width: 3%;
+        text-align: right;
+        border-right: 1px dotted #ccc;
       }
       #hash
       {
-      	width: 10%;
+        width: 10%;
       }
       #date
       {
-      	width: 10%;
+        width: 10%;
       }
       #author
       {
-      	width: 15%;
+        width: 15%;
       } 
       #msg
       {
-      	width: 62%;
-      }           
+        width: 62%;
+      }
     </style>
   </head>
   <body>
-  $(processRepos)
+  $(processRepoDirs)
   </body>
 </html>
 EOF
 }
 
+main() {
+  echo "Generating an audit report for ${GIT_REPOS}..."
+  createReport
+  echo "Git Audit Report created at ${OUTPUT}"
+}
 
 ######################################################################################
 # MAIN
 ######################################################################################
 
-echo -e "Generating an audit report for $START_HERE..."
-cd $START_HERE
-generatePage > $OUTPUT
-echo -e "Git Audit Report created at $OUTPUT"
+main

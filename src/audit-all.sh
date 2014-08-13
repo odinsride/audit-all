@@ -133,7 +133,7 @@ processBranches () {
         git checkout -q ${b}
       fi
 
-      #git pull -q
+      git pull -q
 
     else
       git checkout -q -t origin/${b}
@@ -176,7 +176,7 @@ processRepo () {
   fi
 
   # Pull and prune the repository
-  #updateRepo
+  updateRepo
 
   # Print a list of all the branches
   echo "$(printBranches ${1})"
